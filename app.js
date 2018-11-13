@@ -1,4 +1,4 @@
-'use strict'; 
+'use strict';
 var env  = require('dotenv').config();
 const nodemailer = require('nodemailer');
 var events = require( 'events' );
@@ -65,6 +65,10 @@ hbs.registerPartial('nav', navTemplate);
 
 
 
+var earningsTemplate = fs.readFileSync(__dirname + '/views/earnings.hbs', 'utf8');
+hbs.registerPartial('earning', earningsTemplate); 
+
+
 
 
 app.use(logger('dev'));
@@ -78,7 +82,7 @@ var options = {
   connectionLimit : 100,
   host: "localhost",
   user: "root",
-  password: 'swiftrevolver',
+  //password: 'swiftrevolver',
   database: "revolver"
 };
 

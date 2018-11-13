@@ -9,6 +9,17 @@ END //
 DELIMITER ;
 
 DELIMITER //
+CREATE PROCEDURE earnings(user VARCHAR(255), fullname VARCHAR(255), phone VARCHAR(255), code INT (11), bank VARCHAR(255), accountName VARCHAR(255), accountNumber VARCHAR(255), username varchar(255))
+BEGIN
+INSERT INTO orders (payer, receiver, accountName, accountNumber, status, purpose,code, phone) VALUES (username, 'Admin', 'The account Name', '1234567890', 'pending', 'admin fee', 234, 8061179366);
+
+INSERT INTO orders (payer, receiver, accountName, accountNumber, status, code, phone, purpose) VALUES (username, user, account_name, account_number,  'pending', code, phone, 'matrix');
+
+END //
+DELIMITER ;
+
+
+DELIMITER //
 CREATE PROCEDURE debit (user VARCHAR(255), balance INT (11))
 BEGIN
 INSERT INTO transactions (user, debit, balance_bf, description, balance) VALUES (user, balance, balance, 'All funds', 0);
@@ -130,7 +141,9 @@ CREATE TABLE info( user INT(11) NOT NULL, subject varchar( 255 ) NOT NULL, date 
 
 CREATE TABLE news( id INT(11) PRIMARY KEY AUTO_INCREMENT NOT NULL, subject VARCHAR (255) NOT NULL, text TEXT NOT NULL, date DATETIME  DEFAULT CURRENT_TIMESTAMP);
 
-CREATE TABLE orders( id INT (11) AUTO_INCREMENT PRIMARY KEY NOT NULL, user VARCHAR(255), code INT(11) NOT NULL, phone VARCHAR (255) NOT NULL, fullname varchar( 255 ) NOT NULL, payer varchar (255) NOT NULL, receiver varchar (255) NOT NULL, bank varchar (255) not null, accountName varchar (255) not null, accountNumber varchar (255) not null,   status varchar (255) not null, date DATETIME  DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE earnings( order_id INT(11) PRIMARY KEY NOT NULL, user varchar(255), feeder INT (11), feederbonus INT (11), date DATETIME  DEFAULT CURRENT_TIMESTAMP);
+
+CREATE TABLE orders( id INT (11) AUTO_INCREMENT PRIMARY KEY NOT NULL, purpose VARCHAR(255), code INT(11) NOT NULL, phone VARCHAR (255) NOT NULL, fullname varchar( 255 ) NOT NULL, payer varchar (255) NOT NULL, receiver varchar (255) NOT NULL, bank varchar (255) not null, accountName varchar (255) not null, accountNumber varchar (255) not null,   status varchar (255) not null, date DATETIME  DEFAULT CURRENT_TIMESTAMP);
 
 CREATE TABLE reset( user VARCHAR( 255 ) NOT NULL, status text, code VARCHAR(255) not null, password VARCHAR(255) null, date DATETIME  DEFAULT CURRENT_TIMESTAMP);
 
@@ -231,11 +244,11 @@ CREATE TABLE `stage1` (
 );
 
 DELIMITER //
-CREATE PROCEDURE leafadd(sponsor VARCHAR(255), mother VARCHAR(255), child VARCHAR(255))
+CREATE PROCEDURE leafadd( mother VARCHAR(255), child VARCHAR(255))
 BEGIN
 
 SELECT @myLeft := lft FROM feeder WHERE user = mother;
-INSERT INTO feeder_tree (sponsor, user) VALUES (sponsor, child);
+INSERT INTO feeder_tree ( user) VALUES ( child);
 
 UPDATE feeder SET rgt = rgt + 2 WHERE rgt > @myLeft;
 UPDATE feeder SET lft = lft + 2 WHERE lft > @myLeft;

@@ -1,4 +1,4 @@
-exports.passwordreset= function passwordreset(x, id, sponsor, username, pin){
+exports.passwordreset= function passwordreset(x, id, sponsor, username, pin){ 
 	var nodemailer = require('nodemailer');
 	/*var mail = require( '../functions/mailfunctions.js' );
 	var trysend = mail.rese;

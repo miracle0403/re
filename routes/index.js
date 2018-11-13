@@ -15,7 +15,6 @@ var mysql = require( 'mysql' );
 var db = require('../db.js');
 var expressValidator = require('express-validator'); 
 var  matrix = require('../functions/normal.js'); 
- 
 
 var bcrypt = require('bcrypt-nodejs');
 function rounds( err, results ){ 
@@ -166,7 +165,7 @@ router.get('/dashboard', authentificationMiddleware(), function(req, res, next) 
 					if( results.length === 0 ){
 						db.query( 'SELECT username FROM user WHERE user_id = ?', [currentUser], function ( err, results, fields ){
 							if( err ) throw err;
-							var username = results[0].username;
+							var username =  results[0].username;
 							//check if the user has updated his profile
 							db.query( 'SELECT user FROM profile WHERE user = ?', [username], function ( err, results, fields ){
 								if( err ) throw err;
@@ -761,11 +760,11 @@ router.get('/dashboard', authentificationMiddleware(), function(req, res, next) 
 												var feedentrance = results[0].number;
 												var totalentrance = 0 + feedentrance;
 												//check if the user is receiving
-												db.query( 'SELECT * FROM order WHERE receiver = ? and (status  = ? or status = ?) ', [username, 'pending', 'uploaded'], function ( err, results, fields ){
+												db.query( 'SELECT * FROM orders WHERE receiver = ? and (status  = ? or status = ?) ', [username, 'pending', 'uploaded'], function ( err, results, fields ){
 													if( err ) throw err;
 													if( results.length === 0 ){
 														//check for paid paymets
-														db.query( 'SELECT * FROM order WHERE payer = ? and (status  = ? or status = ?) ', [username, 'pending', 'uploaded'], function ( err, results, fields ){
+														db.query( 'SELECT * FROM orders WHERE payer = ? and (status  = ? or status = ?) ', [username, 'pending', 'uploaded'], function ( err, results, fields ){
 															if( err ) throw err;
 															if ( results.length === 0 ){
 																// check for earnings
@@ -1916,7 +1915,7 @@ router.post('/newsc', function (req, res, next){
 });
 //post join request
 router.post('/feeder', function (req, res, next) {
-	var countDown= new Date("Nov  14,  2018 10:00:00").getTime(  );
+	var countDown= new Date("Nov  1,  2018 10:00:00").getTime(  );
 	var now = new Date().getTime(  );
 	var distance = countDown - now;
 	var days = Math.floor(distance /(1000 * 60 * 60 * 24));

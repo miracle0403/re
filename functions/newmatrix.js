@@ -13,7 +13,7 @@ exports.matrix = function(username, sponsor, res){
 				b: results[0].b,
 				c: results[0].c
 			}
-			if(feeder.a === null && feeder.b === null && feeder.c === null){
+			if(feeder.a === null){
 				//get the stuffs to do
 				db.query('UPDATE feeder_tree SET a = ? WHERE user = ?', [username, user], function(err, results, fields){
 					if(err) throw err;
@@ -38,16 +38,19 @@ exports.matrix = function(username, sponsor, res){
 									code: results[0].code
 								}
 								//enter it into the order table
-								db.query('CALL earnings(?,?,?,?,?,?,?,?)', [user, contact.full_name, contact.phone, contact.code, bank.bank, bank. account_name, bank.account_number], function(err, results, fields){
-									if (err) throw err;
-									res.redirect('dashboard');
+								db.query('INSERT INTO orders (fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,? )', ['ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
+										if( err ) throw err
+										db.query('INSERT INTO orders (fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,? ) ', [contact.full_name, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+										if( err ) throw err
+										res.redirect('dashboard');
+									});	
 								});
 							});
 						});
 					});
 				});
 			}
-			if(feeder.a !== null && feeder.b === null && feeder.c === null){
+			if(feeder.a !== null && feeder.b === null){
 				//get the stuffs to do
 				db.query('UPDATE feeder_tree SET b = ? WHERE user = ?', [username, user], function(err, results, fields){
 					if(err) throw err;
@@ -90,6 +93,7 @@ exports.matrix = function(username, sponsor, res){
 									});
 								}else{
 									//get the variables for the sponinherit
+									
 									var last = results.slice(-1)[0];
 									var use  = {
 										a: last.a,
@@ -183,7 +187,7 @@ exports.matrix = function(username, sponsor, res){
 									code: results[0].code
 								}
 								//enter it into the order table
-								db.query('CALL earnings(?,?,?,?,?,?,?,?)', [user, contact.full_name, contact.phone, contact.code, bank.bank, bank. account_name, bank.account_number], function(err, results, fields){
+								db.query('CALL orders(?,?,?,?,?,?,?,?)', [user, username,  contact.full_name, contact.phone, contact.code, bank.bank, bank. account_name, bank.account_number], function(err, results, fields){
 									if (err) throw err;
 									res.redirect('dashboard');
 								});
@@ -192,9 +196,10 @@ exports.matrix = function(username, sponsor, res){
 					});
 				});
 			}
-			if(feeder.a === null && feeder.b === null && feeder.c === null){
+			if(feeder.a !== null && feeder.b !== null && feeder.c !== null){
+			
 				//get spillovers
-				newfeeder.feederspill( username, user, sponinherit, res);
+				newfeeder.feederspill( username, user, sponsor, res);
 			}
 		});
 	});

@@ -7,7 +7,7 @@ exports.nospon = function(username, sponsor, res){
 		if( err ) throw err;
 		if (results.length === 0){
 			//check if the user is already in the order section.
-			db.query('SELECT payer FROM order WHERE payer = ?', [username], function(err, results, fields){
+			db.query('SELECT payer FROM orders WHERE payer = ?', [username], function(err, results, fields){
 				if( err ) throw err;
 				if (results.length === 0){
 					//get the matrix right
@@ -29,7 +29,7 @@ exports.nospon = function(username, sponsor, res){
 			//check if the a b and c is null
 			if (user.a === null || user.b === null || user.c === null){
 				//return the user to the join matrix
-				var error = 'You cannot join the matrix again because you have a pending order to pay. Please complete the order and try again.';
+				var error = 'You cannot join the matrix again because you have not completed this matrix... refer more persons and try again.';
 				res.render('status', {error: error});
 			}else{
 				//get the first.
