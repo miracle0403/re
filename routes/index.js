@@ -1915,7 +1915,7 @@ router.post('/newsc', function (req, res, next){
 });
 //post join request
 router.post('/feeder', function (req, res, next) {
-	var countDown= new Date("Nov  19,  2018 10:00:00").getTime(  );
+	var countDown= new Date("Jan 7,  2019 10:00:00").getTime(  );
 	var now = new Date().getTime(  );
 	var distance = countDown - now;
 	var days = Math.floor(distance /(1000 * 60 * 60 * 24));
