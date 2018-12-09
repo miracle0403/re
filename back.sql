@@ -187,12 +187,31 @@ CREATE TABLE `stage1_tree` (
 COLLATE='latin1_swedish_ci'
 ENGINE=InnoDB
 ;
-
+`order_id` INT (11) NULL,
+	`purpose` VARCHAR(255),
+	`code` INT(11) NULL,
+	`phone` VARCHAR (255) NULL, 
+	`fullname` varchar( 255 ) NULL, 
+	`payer` varchar (255) NULL,
+	`receiver` varchar (255) NULL, 
+	`bank` varchar (255) null, 
+	`accountName` varchar (255) null, 
+	`accountNumber` varchar (255) null,
+	
+	
 CREATE TABLE `feeder` (
+	`matrix_id` INT(11) UNIQUE PRIMARY KEY AUTO_INCREMENT NOT NULL,
 	`user` VARCHAR(255)NOT NULL,
 	`amount` INT(11) NOT NULL,
 	`lft` INT(11) NOT NULL,
-	`rgt` INT(11) NOT NULL
+	`rgt` INT(11) NOT NULL,
+	`a` VARCHAR(255) NULL DEFAULT NULL,
+	`b` VARCHAR(255) NULL DEFAULT NULL,
+	`c` VARCHAR(255) NULL DEFAULT NULL,
+	`order_id` INT (11) NULL,	
+	`status` varchar (255) null, 
+	`date_entered` DATETIME  DEFAULT CURRENT_TIMESTAMP
+	
 );
 
 CREATE TABLE `admin` (
@@ -244,22 +263,31 @@ CREATE TABLE `stage1` (
 );
 
 DELIMITER //
-CREATE PROCEDURE leafadd( mother VARCHAR(255), child VARCHAR(255))
+CREATE PROCEDURE leafadd( mother VARCHAR(255), child VARCHAR(255), pin INT(11))
 BEGIN
 
 SELECT @myLeft := lft FROM feeder WHERE user = mother;
-INSERT INTO feeder_tree ( user) VALUES ( child);
 
 UPDATE feeder SET rgt = rgt + 2 WHERE rgt > @myLeft;
 UPDATE feeder SET lft = lft + 2 WHERE lft > @myLeft;
-UPDATE feeder SET amount = amount + 1 WHERE user = mother;
-UPDATE user_tree SET feeder = 'yes' WHERE user = child;
-
-INSERT INTO feeder(user, lft, rgt, amount) VALUES(child, @myLeft + 1, @myLeft + 2, 0);
+INSERT INTO feeder(user, lft, rgt, amount, order_id, status) VALUES(child, @myLeft + 1, @myLeft + 2, 0, pin, 'pending');
 
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE leafdel(child VARCHAR(255), pin INT(11))
+BEGIN
+
+SELECT @myLeft := lft FROM feeder WHERE user = child;
+
+UPDATE feeder SET rgt = rgt + 2 WHERE rgt > @myLeft;
+UPDATE feeder SET lft = lft + 2 WHERE lft > @myLeft;
+DELETE FROM feeder WHERE user = child AND 
+INSERT INTO feeder(user, lft, rgt, amount, order_id, status) VALUES(child, @myLeft + 1, @myLeft + 2, 0, pin, 'pending');
+
+END //
+DELIMITER ;
 
 
 CREATE TABLE `earnings` (

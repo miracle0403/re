@@ -1,4 +1,4 @@
-var db  = require( '../db.js' );
+/*var db  = require( '../db.js' );
 //function for reset password
 function reset(){
 	db.query( 'SELECT date FROM reset WHERE status = ?' , ['active'], function ( err, results, fields ){
@@ -54,11 +54,12 @@ setInterval(reset, 500);
 
 //get the time for the matrix removal.
 function firstremove(){
-	db.query( 'SELECT date FROM orders WHERE status = ?' , ['pending'], function ( err, results, fields ){
+	db.query( 'SELECT order_id, date FROM orders WHERE status = ?' , ['pending'], function ( err, results, fields ){
 		if( err ) throw err;
 		if( results.length === 0 ){
 			//console.log( 'no date value' );
 		}else{
+			var order_id = results[0].order_id;
 			var i = 0;
 			while ( i> results.length  ){
 				var dt = results[i].date;
@@ -73,41 +74,62 @@ function firstremove(){
 				var calyear  = dt.setFullYear( dt.getFullYear() + 0);
 				var calmonth = dt.setMonth( dt.getMonth() + 0);
 				if( calmin >=  min){
-					db.query( 'UPDATE order SET status  = ? WHERE date = ?', ['expired', dt], function ( err, results, fields){
+					db.query( 'DELETE FROM order WHERE date = ?', [dt], function ( err, results, fields){
 						if( err ) throw err;
-						db.query( 'DELETE FROM order WHERE status = ?', ['expired'], function ( err, results, fields){
+						//check the order id from the feeder matrix.
+						db.query( 'SELECT user, order_id FROM feeder WHERE order_id = ?' , [order_id], function ( err, results, fields ){
 							if( err ) throw err;
+							if (results.length === 1){
+								//delete from the feeder with a called procedure.
+							}
 						});
 					});
 				}
 				if( calmin < min && calhour > hour ){
-					db.query( 'UPDATE order SET status  = ? WHERE date = ?', ['expired', dt], function ( err, results, fields){
+					db.query( 'DELETE FROM order WHERE date = ?', [dt], function ( err, results, fields){
 						if( err ) throw err;
-						db.query( 'DELETE FROM order WHERE status = ?', ['expired'], function ( err, results, fields){
+						//check the order id from the feeder matrix.
+						db.query( 'SELECT user, order_id FROM feeder WHERE order_id = ?' , [order_id], function ( err, results, fields ){
 							if( err ) throw err;
+							if (results.length === 1){
+								//delete from the feeder with a called procedure.
+							}
 						});
 					});
 				}//end of if
 				 if(calmin < min && calhour < hour && caldate > date){
-				 	db.query( 'UPDATE order SET status  = ? WHERE date = ?', ['expired', dt], function ( err, results, fields){
+				 	db.query( 'DELETE FROM order WHERE date = ?', [dt], function ( err, results, fields){
 						if( err ) throw err;
-						db.query( 'DELETE FROM order WHERE status = ?', ['expired'], function ( err, results, fields){
+						//check the order id from the feeder matrix.
+						db.query( 'SELECT user, order_id FROM feeder WHERE order_id = ?' , [order_id], function ( err, results, fields ){
 							if( err ) throw err;
+							if (results.length === 1){
+								//delete from the feeder with a called procedure.
+							}
 						});
 					});
 				 }
 				 if(calmin < min && calhour < hour && caldate < date && calmonth > month){
-				 	db.query( 'UPDATE order SET status  = ? WHERE date = ?', ['expired', dt], function ( err, results, fields){
+				 	db.query( 'DELETE FROM order WHERE date = ?', [dt], function ( err, results, fields){
 						if( err ) throw err;
-						db.query( 'DELETE FROM order WHERE status = ?', ['expired'], function ( err, results, fields){
+						//check the order id from the feeder matrix.
+						db.query( 'SELECT user, order_id FROM feeder WHERE order_id = ?' , [order_id], function ( err, results, fields ){
 							if( err ) throw err;
+							if (results.length === 1){
+								//delete from the feeder with a called procedure.
+							}
 						});
-					});				 }
+					});
+				 }
 				 if(calmin < min && calhour < hour && caldate < date && calmonth < month && calyear > year){
-				 	db.query( 'UPDATE order SET status  = ? WHERE date = ?', ['expired', dt], function ( err, results, fields){
+				 	db.query( 'DELETE FROM order WHERE date = ?', [dt], function ( err, results, fields){
 						if( err ) throw err;
-						db.query( 'DELETE FROM order WHERE status = ?', ['expired'], function ( err, results, fields){
+						//check the order id from the feeder matrix.
+						db.query( 'SELECT user, order_id FROM feeder WHERE order_id = ?' , [order_id], function ( err, results, fields ){
 							if( err ) throw err;
+							if (results.length === 1){
+								//delete from the feeder with a called procedure.
+							}
 						});
 					});
 				 }
@@ -116,4 +138,4 @@ function firstremove(){
 		}
 	});
 }
-setInterval(firstremove, 500);
+setInterval(firstremove, 500);*/

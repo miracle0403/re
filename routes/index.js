@@ -6,7 +6,8 @@ var reset = require('../functions/mailfunctions.js');
 var fillup = require('../functions/withsponsor.js');
 var timer = require( '../functions/datefunctions.js' ); 
 var express = require('express');
-var passport = require('passport'); 
+var passport = require('passport');
+var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn
 var securePin = require('secure-pin');
 var charSet = new securePin.CharSet();
 charSet.addLowerCaseAlpha().addUpperCaseAlpha().addNumeric().randomize();
@@ -28,7 +29,7 @@ var pool  = mysql.createPool({
   waitForConnections: true,
   host: "localhost",
   user: "root",
-  password: 'swiftrevolver',
+  //password: 'swiftrevolver',
   database: "revolver"
 });
 /*var user = 'adminadmin';
@@ -61,7 +62,7 @@ router.get('/faq',  function (req, res, next){
 //get dashboard
 
 //get web courses
-router.get('/webcourse', authentificationMiddleware(), function (req, res, next){
+router.get('/webcourse', ensureLoggedIn('/login'), function (req, res, next){
 	var currentUser = req.session.passport.user.user_id;
 	console.log( currentUser)
 	db.query( 'SELECT username FROM user WHERE user_id = ?', [currentUser], function ( err, results, fields ){
@@ -146,7 +147,7 @@ router.get('/news',  function (req, res, next){
 });
 
 //get dashboard
-router.get('/dashboard', authentificationMiddleware(), function(req, res, next) { 
+router.get('/dashboard', ensureLoggedIn('/login'), function(req, res, next) { 
 	var currentUser = req.session.passport.user.user_id;
 	db.query( 'SELECT subject FROM news', function ( err, results, fields ){
 		if ( err ) throw err;
@@ -1056,7 +1057,7 @@ router.get('/passwordreset',  function (req, res, next){
   res.render('passwordreset', {title: "PASSWORD RESET"});
 });
 // get verification
-router.get('/manage', authentificationMiddleware(), function (req, res, next){
+router.get('/manage', ensureLoggedIn('/login'), function (req, res, next){
 	  var currentUser = req.session.passport.user.user_id;
 	  db.query( 'SELECT user FROM admin WHERE user  = ?', [currentUser], function ( err, results, fields ){ 
 			if( err ) throw err;
@@ -1095,7 +1096,7 @@ router.get('/status', function (req, res, next) {
 });
 
 //all users
-router.get('/allusers', authentificationMiddleware(), function  (req, res, next) {
+router.get('/allusers', ensureLoggedIn('/login'), function  (req, res, next) {
 		var currentUser = req.session.passport.user.user_id;
 		var route = req.route.path;
 		restrict( currentUser, route, res )
@@ -1200,7 +1201,7 @@ router.get('/login', function(req, res, next) {
 });
 
 //get referrals
-router.get('/referrals', authentificationMiddleware(), function(req, res, next) {
+router.get('/referrals', ensureLoggedIn('/login'), function(req, res, next) {
   var currentUser = req.session.passport.user.user_id;
  // var admin = admini( currentUser )
   //get sponsor name from database to profile page
