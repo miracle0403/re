@@ -281,8 +281,8 @@ BEGIN
 
 SELECT @myLeft := lft FROM feeder WHERE user = child;
 
-UPDATE feeder SET rgt = rgt + 2 WHERE rgt > @myLeft;
-UPDATE feeder SET lft = lft + 2 WHERE lft > @myLeft;
+UPDATE feeder SET rgt = rgt - 2 WHERE rgt > @myLeft;
+UPDATE feeder SET lft = lft - 2 WHERE lft > @myLeft;
 DELETE FROM feeder WHERE user = child AND 
 INSERT INTO feeder(user, lft, rgt, amount, order_id, status) VALUES(child, @myLeft + 1, @myLeft + 2, 0, pin, 'pending');
 

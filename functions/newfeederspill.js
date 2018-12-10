@@ -47,13 +47,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 										}
 											//enter it into the order table
 										db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-											if( err ) throw err
-											securePin.generatePin(5, function(pin){
-												var pin2 = pin;
-												db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder1spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-													if( err ) throw err
-													res.redirect('dashboard');
-												});
+											if( err ) throw err;
+											db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder1spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+												if( err ) throw err
+												res.redirect('dashboard');
 											});
 										});
 									});
@@ -113,13 +110,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 															}
 															//enter it into the order table
 															db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																if( err ) throw err
-																securePin.generatePin(5, function(pin){
-																	var pin2 = pin;
-																	db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																		if( err ) throw err
-																		res.redirect('dashboard');
-																	});
+																if( err ) throw err;
+																db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																	if( err ) throw err
+																	res.redirect('dashboard');
 																});
 															});
 														});
@@ -163,13 +157,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 																		code: results[0].code
 																	}
 																	db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																		if( err ) throw err
-																		securePin.generatePin(5, function(pin){
-																			var pin2 = pin;
-																			db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																				if( err ) throw err
-																				res.redirect('dashboard');
-																			});
+																		if( err ) throw err;
+																		db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																			if( err ) throw err
+																			res.redirect('dashboard');
 																		});
 																	});
 																});
@@ -204,13 +195,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 																			code: results[0].code
 																		}
 																		db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																			if( err ) throw err
-																			securePin.generatePin(5, function(pin){
-																				var pin2 = pin;
-																				db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																					if( err ) throw err
-																					res.redirect('dashboard');
-																				});
+																			if( err ) throw err;
+																			db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																				if( err ) throw err
+																				res.redirect('dashboard');
 																			});
 																		});
 																	});
@@ -237,13 +225,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 																			code: results[0].code
 																		}
 																		db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																			if( err ) throw err
-																			securePin.generatePin(5, function(pin){
-																				var pin2 = pin;
-																				db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																					if( err ) throw err
-																					res.redirect('dashboard');
-																				});
+																			if( err ) throw err;
+																			db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																				if( err ) throw err
+																				res.redirect('dashboard');
 																			});
 																		});
 																	});
@@ -284,13 +269,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 															}
 																//enter it into the order table
 															db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																if( err ) throw err
-																securePin.generatePin(5, function(pin){
-																	var pin2 = pin;
-																	db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																		if( err ) throw err
-																		res.redirect('dashboard');
-																	});
+																if( err ) throw err;
+																db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder3spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																	if( err ) throw err
+																	res.redirect('dashboard');
 																});
 															});
 														});
@@ -342,13 +324,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 													}
 													//enter it into the order table
 													db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-														if( err ) throw err
-														securePin.generatePin(5, function(pin){
-															var pin2 = pin;
-															db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																if( err ) throw err
-																res.redirect('dashboard');
-															});
+														if( err ) throw err;
+														db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+															if( err ) throw err
+															res.redirect('dashboard');
 														});
 													});
 												});
@@ -392,13 +371,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 																code: results[0].code
 															}
 															db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																if( err ) throw err
-																securePin.generatePin(5, function(pin){
-																	var pin2 = pin;
-																	db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																		if( err ) throw err
-																		res.redirect('dashboard');
-																	});
+																if( err ) throw err;
+																db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																	if( err ) throw err
+																	res.redirect('dashboard');
 																});
 															});
 														});
@@ -433,13 +409,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 																	code: results[0].code
 																}
 																db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																	if( err ) throw err
-																	securePin.generatePin(5, function(pin){
-																		var pin2 = pin;
-																		db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																			if( err ) throw err
-																			res.redirect('dashboard');
-																		});
+																	if( err ) throw err;
+																	db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																		if( err ) throw err
+																		res.redirect('dashboard');
 																	});
 																});
 															});
@@ -466,13 +439,10 @@ exports.feederspill = function feederspill( username, user, sponsor, res){
 																	code: results[0].code
 																}
 																db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-																	if( err ) throw err
-																	securePin.generatePin(5, function(pin){
-																		var pin2 = pin;
-																		db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin2, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-																			if( err ) throw err
-																			res.redirect('dashboard');
-																		});
+																	if( err ) throw err;
+																	db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, feeder2spill.user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+																		if( err ) throw err
+																		res.redirect('dashboard');
 																	});
 																});
 															});
