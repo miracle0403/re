@@ -176,7 +176,7 @@ router.get('/dashboard', ensureLoggedIn('/login'), function(req, res, next) {
 										var error = 'Please update your profile to see your stats.';
 										res.render( 'dashboard', {title: 'DASHBOARD', news: news, error: error});
 									}else{
-										db.query( 'SELECT user FROM feeder WHERE user = ?', [username], function ( err, results, fields ){
+										db.query( 'SELECT * FROM feeder WHERE user = ?', [username], function ( err, results, fields ){
 											if( err ) throw err;
 											if (results.length === 0){
 												var message = 'You have not entered the matrix yet. Please enter the matrix';
@@ -184,15 +184,477 @@ router.get('/dashboard', ensureLoggedIn('/login'), function(req, res, next) {
 												var totalentrance = 0;
 												var feederearn = 0;
 												var feederbonus  = 0;
+												var referral_bonus = 0;
 												var total = 0;
-												res.render('dashboard', {title: 'DASHBOARD', news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: message});
+												res.render('dashboard', {title: 'DASHBOARD', referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: message});
 											}else{
+												//get his last legs
+												var last  = results.slice(-1)[0];
+												var legs = {
+													a: last.a,
+													b: last.b,
+													c: last.c
+												}
 												//check the number of times he has entered the feeder stage
 												db.query( 'SELECT COUNT(user) AS number FROM feeder WHERE user = ?', [username], function ( err, results, fields ){
 													if( err ) throw err;
 													var feedentrance = results[0].number;
 													var totalentrance = 0 + feedentrance;
-													
+													//check if they have a pending order.
+													db.query( 'SELECT * FROM orders WHERE (user = ? or payer = ? or receiver = ?) and (status = ? or status = ?) ', [username, username, username, 'pending', 'unconfirmed'], function ( err, results, fields ){
+														if( err ) throw err;
+														if (results.length === 0 ){
+															//check the earnings.
+															db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																if( err ) throw err;
+																if(results.length === 0){
+																	var feederbonus  = 0;
+																	var referral_bonus = 0;
+																	//check for the matrix bonus
+																	db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																		if( err ) throw err;
+																		if(results.length === 0){
+																			var feederearn  = 0;
+																			var total  = 0;
+																			//check if the user legs is filled.
+																			if(legs.a !== null && legs.b !== null && legs.c !== null){
+																				//give them the opportunity to reenter matrix.
+																				var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																				//create 0 variables for the earning section.
+																				res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																			}
+																		}else{
+																			var feederearn = results[0].total_amount;
+																			var total = feederearn + referral_bonus;
+																			res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																		}
+																	});
+																}else{
+																	var referral_bonus = results[0].total_referral;
+																	//check the referral section.
+																	//check for the matrix bonus
+																	db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																		if( err ) throw err;
+																		if(results.length === 0){
+																			var feederearn  = 0;
+																			var total  = referral_bonus + feederearn;
+																			//check if the user legs is filled.
+																			if(legs.a !== null && legs.b !== null && legs.c !== null){
+																				//give them the opportunity to reenter matrix.
+																				var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																				//create 0 variables for the earning section.
+																				res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																			}
+																		}else{
+																			var feederearn = results[0].total_amount;
+																			var total = referral_bonus + feederearn;
+																			res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																			
+																		}
+																	});
+																}
+															});
+														}
+														//if the username is the user.
+														else{
+															//check if the users is the payer
+															db.query( 'SELECT * FROM orders WHERE payer  = ?', [username], function ( err, results, fields ){
+																if( err ) throw err;
+																if(results.length === 0){
+																	//check for the receiver
+																	db.query( 'SELECT * FROM orders WHERE receiver  = ?', [username], function ( err, results, fields ){
+																		if( err ) throw err;
+																		if(results.length === 0){
+																			//check for the user
+																			db.query( 'SELECT * FROM orders WHERE user  = ?', [username], function ( err, results, fields ){
+																				if( err) throw err;
+																				db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																					if( err ) throw err;
+																					if(results.length === 0){
+																						var feederbonus  = 0;
+																						var referral_bonus = 0;
+																						//check for the matrix bonus
+																						db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																							if( err ) throw err;
+																							if(results.length === 0){
+																								var feederearn  = 0;
+																								var total  = 0;
+																								//check if the user legs is filled.
+																								if(legs.a !== null && legs.b !== null && legs.c !== null){
+																									//give them the opportunity to reenter matrix.
+																									var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																									//create 0 variables for the earning section.
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																								}
+																							}else{
+																								var feederearn = results[0].total_amount;
+																								var total = feederearn + referral_bonus;
+																								res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																							}
+																						});
+																					}else{
+																						var referral_bonus = results[0].total_referral;
+																						//check the referral section.
+																						//check for the matrix bonus
+																						db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																							if( err ) throw err;
+																							if(results.length === 0){
+																								var feederearn  = 0;
+																								var total  = referral_bonus + feederearn;
+																								//check if the user legs is filled.
+																								if(legs.a !== null && legs.b !== null && legs.c !== null){
+																									//give them the opportunity to reenter matrix.
+																									var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																									//create 0 variables for the earning section.
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																								}
+																							}else{
+																								var feederearn = results[0].total_amount;
+																								var total = referral_bonus + feederearn;
+																								res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																								
+																							}
+																						});
+																					}
+																				});
+																			});
+																		}else{
+																			var receiver = results;
+																			//check for the user
+																			db.query( 'SELECT * FROM orders WHERE user  = ?', [username], function ( err, results, fields ){
+																				if( err ) throw err;
+																				if(results.length === 0){
+																					db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																						if( err ) throw err;
+																						if(results.length === 0){
+																							var feederbonus  = 0;
+																							var referral_bonus = 0;
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = 0;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = feederearn + referral_bonus;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																								}
+																							});
+																						}else{
+																							var referral_bonus = results[0].total_referral;
+																							//check the referral section.
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = referral_bonus + feederearn;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = referral_bonus + feederearn;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									
+																								}
+																							});
+																						}
+																					});
+																				}else{
+																					var user = results;
+																					db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																						if( err ) throw err;
+																						if(results.length === 0){
+																							var feederbonus  = 0;
+																							var referral_bonus = 0;
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = 0;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = feederearn + referral_bonus;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																								}
+																							});
+																						}else{
+																							var referral_bonus = results[0].total_referral;
+																							//check the referral section.
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = referral_bonus + feederearn;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = referral_bonus + feederearn;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									
+																								}
+																							});
+																						}
+																					});
+																				}
+																			});
+																		}
+																	});
+																}else{
+																	var payer = results;
+																	//check the receiver
+																	db.query( 'SELECT * FROM orders WHERE receiver  = ?', [username], function ( err, results, fields ){
+																		if( err ) throw err;
+																		if(results.length === 0){
+																			db.query( 'SELECT * FROM orders WHERE user  = ?', [username], function ( err, results, fields ){
+																				if( err ) throw err;
+																				if(results.length === 0){
+																					//render only payer
+																					db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																						if( err ) throw err;
+																						if(results.length === 0){
+																							var feederbonus  = 0;
+																							var referral_bonus = 0;
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = 0;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = feederearn + referral_bonus;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																								}
+																							});
+																						}else{
+																							var referral_bonus = results[0].total_referral;
+																							//check the referral section.
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = referral_bonus + feederearn;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = referral_bonus + feederearn;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									
+																								}
+																							});
+																						}
+																					});
+																				}else{
+																					var user = results;
+																					db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																						if( err ) throw err;
+																						if(results.length === 0){
+																							var feederbonus  = 0;
+																							var referral_bonus = 0;
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = 0;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = feederearn + referral_bonus;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																								}
+																							});
+																						}else{
+																							var referral_bonus = results[0].total_referral;
+																							//check the referral section.
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = referral_bonus + feederearn;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = referral_bonus + feederearn;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									
+																								}
+																							});
+																						}
+																					});
+																				}
+																			});
+																		
+																		}else{
+																			var receiver = results;
+																			//get the user
+																			db.query( 'SELECT * FROM orders WHERE user  = ?', [username], function ( err, results, fields ){
+																				if( err ) throw err;
+																				if(results.length === 0){
+																					db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																						if( err ) throw err;
+																						if(results.length === 0){
+																							var feederbonus  = 0;
+																							var referral_bonus = 0;
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = 0;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = feederearn + referral_bonus;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																								}
+																							});
+																						}else{
+																							var referral_bonus = results[0].total_referral;
+																							//check the referral section.
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = referral_bonus + feederearn;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = referral_bonus + feederearn;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									
+																								}
+																							});
+																						}
+																					});
+																				}else{
+																					var user = results;
+																					db.query( 'SELECT SUM(amount) AS total_referral FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder referral bonus', 'confirmed'], function ( err, results, fields ){
+																						if( err ) throw err;
+																						if(results.length === 0){
+																							var feederbonus  = 0;
+																							var referral_bonus = 0;
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = 0;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = feederearn + referral_bonus;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance});
+																								}
+																							});
+																						}else{
+																							var referral_bonus = results[0].total_referral;
+																							//check the referral section.
+																							//check for the matrix bonus
+																							db.query( 'SELECT SUM(amount) AS total_amount FROM orders WHERE receiver = ? and purpose = ? and status = ?', [username, 'feeder matrix', 'confirmed'], function ( err, results, fields ){
+																								if( err ) throw err;
+																								if(results.length === 0){
+																									var feederearn  = 0;
+																									var total  = referral_bonus + feederearn;
+																									//check if the user legs is filled.
+																									if(legs.a !== null && legs.b !== null && legs.c !== null){
+																										//give them the opportunity to reenter matrix.
+																										var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+																										//create 0 variables for the earning section.
+																										res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									}
+																								}else{
+																									var feederearn = results[0].total_amount;
+																									var total = referral_bonus + feederearn;
+																									res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+																									
+																								}
+																							});
+																						}
+																					});
+																				}
+																			});
+																		}
+																	});
+																}
+															});
+														}
+													});
 												});
 											}
 										});
@@ -954,7 +1416,7 @@ router.post('/reset', function(req, res, next) {
 		 }
 	 });
 	
-router.post('/search', authentificationMiddleware(), function  (req, res, next) {
+router.post('/search', function  (req, res, next) {
 		var currentUser = req.session.passport.user.user_id;
 		var route = req.route.path;
 		restrict( currentUser, route, res )
@@ -1205,7 +1667,7 @@ router.post('/newsc', function (req, res, next){
 });
 //post join request
 router.post('/feeder', function (req, res, next) {
-	var countDown= new Date("Jan 7,  2019 10:00:00").getTime(  );
+	var countDown= new Date("Jan 11,  2019 10:00:00").getTime(  );
 	var now = new Date().getTime(  );
 	var distance = countDown - now;
 	var days = Math.floor(distance /(1000 * 60 * 60 * 24));

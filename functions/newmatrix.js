@@ -41,11 +41,11 @@ exports.matrix = function(username, sponsor, res){
 										phone: results[0].phone,
 										code: results[0].code
 									}
-									//enter it into the order table
-									db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-										if( err ) throw err
-										db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-											if( err ) throw err
+									//enter it into the order table  make it a called procedure.
+									db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', user, username, 'Admin', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
+										if( err ) throw err;
+										db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, user, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+											if( err ) throw err;
 											res.redirect('dashboard');
 										});
 									});
@@ -89,10 +89,10 @@ exports.matrix = function(username, sponsor, res){
 												phone: results[0].phone,
 												code: results[0].code
 											}
-											db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-												if( err ) throw err
-												db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-													if( err ) throw err
+											db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', user, username, 'Admin', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
+												if( err ) throw err;
+												db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, 'ADMINISTRATOR', user, username, 'Admin', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'referral fee penalty', 234, 8061179366], function( err, results, fields ){
+													if( err ) throw err;
 													res.redirect('dashboard');
 												});
 											});
@@ -127,9 +127,9 @@ exports.matrix = function(username, sponsor, res){
 													phone: results[0].phone,
 													code: results[0].code
 												}
-												db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
+												db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', sponinherit, username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
 													if( err ) throw err
-													db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+													db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, sponinherit, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
 														if( err ) throw err
 														res.redirect('dashboard');
 													});
@@ -157,10 +157,10 @@ exports.matrix = function(username, sponsor, res){
 													phone: results[0].phone,
 													code: results[0].code
 												}
-												db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-													if( err ) throw err
-													db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-														if( err ) throw err
+												db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', user, username, 'Admin', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
+													if( err ) throw err;
+													db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, 'ADMINISTRATOR', user, username, 'Admin', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'referral fee penalty', 234, 8061179366], function( err, results, fields ){
+														if( err ) throw err;
 														res.redirect('dashboard');
 													});
 												});
@@ -201,10 +201,10 @@ exports.matrix = function(username, sponsor, res){
 										code: results[0].code
 									}
 									//enter it into the order table
-									db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', username, 'Admin', 'The account Name', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
-										if( err ) throw err
-										db.query('INSERT INTO orders (order_id, fullname, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
-											if( err ) throw err
+									db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', user, username, 'Admin', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
+										if( err ) throw err;
+										db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, user, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+											if( err ) throw err;
 											res.redirect('dashboard');
 										});
 									});
