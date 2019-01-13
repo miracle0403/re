@@ -42,7 +42,7 @@ reset.sendverify( user, email )*/
 //console.log( admin ) 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  console.log(req.user);
+  console.log(req.user); 
   
  	res.render('index', { title: 'SWIFT REVOLVER' });		
 
@@ -95,6 +95,7 @@ router.get('/webcourse', ensureLoggedIn('/login'), function (req, res, next){
 });
 
 //get web forum
+/*
 router.get('/webforum', authentificationMiddleware(), function (req, res, next){
 	var currentUser = req.session.passport.user.user_id;
 	db.query( 'SELECT username FROM user WHERE user_id = ?', [currentUser], function ( err, results, fields ){
@@ -124,7 +125,7 @@ router.get('/webforum', authentificationMiddleware(), function (req, res, next){
 			}
 		});
 	});
-});
+});*/
 
 
 //get fast teams
@@ -936,7 +937,7 @@ router.get('/register', function(req, res, next) {
 });
 
 //get login
-router.get('/login', function(req, res, next) {
+router.get('/login', function(req, res, next) {  
 	const flashMessages = res.locals.getMessages( );
 	if( flashMessages.error ){
 		res.render( 'login', {
@@ -946,9 +947,7 @@ router.get('/login', function(req, res, next) {
 		});
 	}else{
 		res.render('login', { title: 'LOG IN'});
-		//res.render( 'login' )
 	}
-	//console.log( 'flash', flashMessages);
 });
 
 //get referrals
@@ -1667,7 +1666,7 @@ router.post('/newsc', function (req, res, next){
 });
 //post join request
 router.post('/feeder', function (req, res, next) {
-	var countDown= new Date("Jan 11,  2019 10:00:00").getTime(  );
+	var countDown= new Date("Jan 13,  2019 10:00:00").getTime(  );
 	var now = new Date().getTime(  );
 	var distance = countDown - now;
 	var days = Math.floor(distance /(1000 * 60 * 60 * 24));

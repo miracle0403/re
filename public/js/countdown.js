@@ -1,5 +1,5 @@
 //function count( ){ 
-var countDown= new Date("Jan 11,  2019 10:00:00").getTime(  );
+var countDown= new Date("Feb 13,  2019 10:00:00").getTime(  );
 		
  		var x = setInterval(function(){
  		var now = new Date().getTime(  );
