@@ -28,8 +28,8 @@ var pool  = mysql.createPool({
   multipleStatements: true, 
   waitForConnections: true,
   host: "localhost",
-  user: "root",
-  //password: 'swiftrevolver',
+  user: "swiftrevolver",
+  password: 'swiftrevolver994',
   database: "revolver"
 });
 /*var user = 'adminadmin';
