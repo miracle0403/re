@@ -1,7 +1,6 @@
 'use strict';
 const nodemailer = require('nodemailer'); 
 //var resete = require('../nodemailer/passwordreset.js');
-var matrix = require( '../functions/normal.js' ); 
 var reset = require('../functions/mailfunctions.js');
 var fillup = require('../functions/withsponsor.js');
 var timer = require( '../functions/datefunctions.js' ); 
@@ -16,8 +15,9 @@ var mysql = require( 'mysql' );
 var db = require('../db.js');
 var expressValidator = require('express-validator'); 
 var  matrix = require('../functions/normal.js'); 
-
+var  timer = require('../functions/timer.js'); 
 var bcrypt = require('bcrypt-nodejs');
+
 function rounds( err, results ){ 
 	if ( err ) throw err;
 }
@@ -32,14 +32,7 @@ var pool  = mysql.createPool({
   password: 'swiftrevolver994',
   database: "revolver"
 });
-/*var user = 'adminadmin';
-var email = 'mify1@yahoo.com';
-reset.sendverify( user, email )*/
-//
-//console.log( days )
-//console.log( now )
-//var admin = admin( );
-//console.log( admin ) 
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   console.log(req.user); 
@@ -59,7 +52,6 @@ router.get('/faq',  function (req, res, next){
   res.render('faq', {title: "FAQ"});
 });
 
-//get dashboard
 
 //get web courses
 router.get('/webcourse', ensureLoggedIn('/login'), function (req, res, next){
@@ -94,39 +86,582 @@ router.get('/webcourse', ensureLoggedIn('/login'), function (req, res, next){
 	});
 });
 
-//get web forum
-/*
-router.get('/webforum', authentificationMiddleware(), function (req, res, next){
+//get the earnings page.
+router.get('/orders', ensureLoggedIn('/login'), function(req, res, next) {
 	var currentUser = req.session.passport.user.user_id;
-	db.query( 'SELECT username FROM user WHERE user_id = ?', [currentUser], function ( err, results, fields ){
-		if (err) throw err;
+	var firstcount = timer.firstcount()
+	db.query( 'SELECT username, full_name FROM user WHERE user_id = ? ', [currentUser], function ( err, results, fields ){
+		if( err ) throw err;
 		var username = results[0].username;
-		// check if the user is in the feeder matrix.
-		db.query( 'SELECT user FROM feeder WHERE user = ?', [username], function ( err, results, fields ){
-			if (err) throw err;
+		var fullname = results[0].full_name;
+		//check if the user has a paid order that is still in pending status
+		db.query( 'SELECT * FROM orders WHERE status = ? and payer = ?', ['pending', username], function ( err, results, fields ){
+			if( err ) throw err;
 			if (results.length === 0){
-				res.redirect('unauthorized');
-			}else{
-				//check his feeder tree to see his last.
-				db.query( 'SELECT user FROM feeder_tree WHERE user = ?', [username], function ( err, results, fields ){
-					if (err) throw err;
-					var last = results.slice(-1)[0];
-					var lasttree = {
-						a: last.a,
-						b: last.b,
-						c: last.c
-					}
-					if (last.a === null || last.b === null || last.c === null){
-						res.render('webforum', {title: 'WEB DEVELOPMENT FORUM'});
+				//check if he has any paid order that is unconfirmed.
+				db.query( 'SELECT * FROM orders WHERE status = ? and payer = ?', ['unconfirmed', username], function ( err, results, fields ){
+					if( err ) throw err;
+					if (results.length === 0){
+						//check if he has any receiving order is pending
+						db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['pending', username], function ( err, results, fields ){
+							if( err ) throw err;
+							if (results.length === 0){
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														var message = 'Ooops! For now, you do not have an order... When you get one, you will see it here.';
+														res.render('orders',  { title: 'MY EARNINGS', message: message});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', userpending: userpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}else{
+								var receiverpending = results;
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', receiverpending: receiverpending, userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed, receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', userpending: userpending, receiverpending: receiverpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}
+						});
 					}else{
-						res.redirect('unauthorized');
+						var payerunconfirmed = results;
+						db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['pending', username], function ( err, results, fields ){
+							if( err ) throw err;
+							if (results.length === 0){
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed,});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS',payerunconfirmed: payerunconfirmed, userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', receiverunconfimed: receiverunconfimed, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', userpending: userpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}else{
+								var receiverpending = results;
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, receiverpending: receiverpending, userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed,receiverunconfimed: receiverunconfimed, receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerunconfirmed: payerunconfirmed, userpending: userpending, receiverpending: receiverpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}
+						});
+					}
+				});
+			}else{
+				var payerpending = results;
+				db.query( 'SELECT * FROM orders WHERE status = ? and payer = ?', ['unconfirmed', username], function ( err, results, fields ){
+					if( err ) throw err;
+					if (results.length === 0){
+						//check if he has any receiving order is pending
+						db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['pending', username], function ( err, results, fields ){
+							if( err ) throw err;
+							if (results.length === 0){
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending,});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, userpending: userpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}else{
+								var receiverpending = results;
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverpending: receiverpending, userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed, receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, userpending: userpending, receiverpending: receiverpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}
+						});
+					}else{
+						var payerunconfirmed = results;
+						db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['pending', username], function ( err, results, fields ){
+							if( err ) throw err;
+							if (results.length === 0){
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed,});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, receiverunconfimed: receiverunconfimed, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, userpending: userpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}else{
+								var receiverpending = results;
+								//check if he has any receiving order is unconfirmed
+								db.query( 'SELECT * FROM orders WHERE status = ? and receiver = ?', ['unconfirmed', username], function ( err, results, fields ){
+									if( err ) throw err;
+									if (results.length === 0){
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, receiverpending: receiverpending, userpending: userpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}else{
+										var receiverunconfimed = results;
+										//check if the user is just an observer i.e not receiving and not paying.
+										db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['pending', username, username], function ( err, results, fields ){
+											if( err ) throw err;
+											if (results.length === 0){
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed,receiverunconfimed: receiverunconfimed, receiverpending: receiverpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userunconfirmed: userunconfirmed});
+													}
+												});
+											}else{
+												var userpending = results;
+												//check if the user is just an observer i.e not receiving and not paying and still unconfirmed.
+												db.query( 'SELECT * FROM orders WHERE status = ? and user = ? and NOT receiver = ?', ['unconfirmed', username, username], function ( err, results, fields ){
+													if( err ) throw err;
+													if (results.length === 0){
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, receiverunconfimed: receiverunconfimed, receiverpending: receiverpending, userpending: userpending});
+													}else{
+														var userunconfirmed = results;
+														res.render('orders',  { title: 'MY EARNINGS', payerpending: payerpending, payerunconfirmed: payerunconfirmed, userpending: userpending, receiverpending: receiverpending, receiverunconfimed: receiverunconfimed, userunconfirmed: userunconfirmed});
+													}
+												});
+											}
+										});
+									}
+								});
+							}
+						});
 					}
 				});
 			}
 		});
-	});
-});*/
-
+    });
+});
 
 //get fast teams
 router.get('/fastteams',  function (req, res, next){
@@ -188,6 +723,49 @@ router.get('/dashboard', ensureLoggedIn('/login'), function(req, res, next) {
 												var referral_bonus = 0;
 												var total = 0;
 												res.render('dashboard', {title: 'DASHBOARD', referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: message});
+											}else{
+												//if the user has been in the feeder matrix before
+												//get his last legs
+												var last  = results.slice(-1)[0];
+												var legs = {
+													a: last.a,
+													b: last.b,
+													c: last.c
+												}
+												//check the number of times he has entered the feeder stage
+												db.query( 'SELECT COUNT(user) AS number FROM feeder WHERE user = ?', [username], function ( err, results, fields ){
+													if( err ) throw err;
+													var feedentrance = results[0].number;
+													var totalentrance = 0 + feedentrance;
+													//get his total earnings
+													db.query( 'SELECT SUM(feeder_referral) AS feederbonus, SUM(feederearn) AS feederearn FROM earnings WHERE user = ?', [username], function ( err, results, fields ){
+														if( err ) throw err;
+														var feederearn = results[0].feederearn;
+														var feederbonus = results[0].feederbonus;
+														var referral_bonus = 0 + feederbonus;
+														var total = referral_bonus + feederearn;
+														//check if the last legs are filled or not.
+														if(legs.a !== null && legs.b !== null && legs.c !== null){
+															//give them the opportunity to reenter matrix.
+															var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+															//create 0 variables for the earning section.
+															res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+														}
+														else{
+															//check if the  user has a pending order
+															db.query( 'SELECT receiver FROM orders WHERE receiver = ?', [username], function ( err, results, fields ){
+																if( err ) throw err;
+																if (results.length === 0){
+																	//render the legs
+																	res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}else{
+																	var info = "Someone wants to pay you!"
+																	res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, message: info, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}
+															});
+														}
+													});
+												});
 											}
 										});
 									}//end of when user update his profile
@@ -217,6 +795,49 @@ router.get('/dashboard', ensureLoggedIn('/login'), function(req, res, next) {
 												var referral_bonus = 0;
 												var total = 0;
 												res.render('dashboard', {title: 'DASHBOARD', referral_bonus: referral_bonus, news: news, admin: admin, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: message});
+											}else{
+												//if the user has been in the feeder matrix before
+												//get his last legs
+												var last  = results.slice(-1)[0];
+												var legs = {
+													a: last.a,
+													b: last.b,
+													c: last.c
+												}
+												//check the number of times he has entered the feeder stage
+												db.query( 'SELECT COUNT(user) AS number FROM feeder WHERE user = ?', [admin], function ( err, results, fields ){
+													if( err ) throw err;
+													var feedentrance = results[0].number;
+													var totalentrance = 0 + feedentrance;
+													//get his total earnings
+													db.query( 'SELECT SUM(feeder_referral) AS feederbonus, SUM(feederearn) AS feederearn FROM earnings WHERE user = ?', [admin], function ( err, results, fields ){
+														if( err ) throw err;
+														var feederearn = results[0].feederearn;
+														var feederbonus = results[0].feederbonus;
+														var referral_bonus = 0 + feederbonus;
+														var total = referral_bonus + feederearn;
+														//check if the last legs are filled or not.
+														if(legs.a !== null && legs.b !== null && legs.c !== null){
+															//give them the opportunity to reenter matrix.
+															var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+															//create 0 variables for the earning section.
+															res.render('dashboard', {title: 'DASHBOARD', admin: admin, a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+														}
+														else{
+															//check if the  user has a pending order
+															db.query( 'SELECT receiver FROM orders WHERE receiver = ?', [admin], function ( err, results, fields ){
+																if( err ) throw err;
+																if (results.length === 0){
+																	//render the legs
+																	res.render('dashboard', {title: 'DASHBOARD', admin: admin, a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}else{
+																	var info = "Someone wants to pay you!"
+																	res.render('dashboard', {title: 'DASHBOARD', admin: admin, a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, news: news, feederearn: feederearn, total: total, message: info, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}
+															});
+														}
+													});
+												});
 											}
 										});
 									}//end of when user update his profile
@@ -253,6 +874,49 @@ router.get('/dashboard', ensureLoggedIn('/login'), function(req, res, next) {
 												var referral_bonus = 0;
 												var total = 0;
 												res.render('dashboard', {title: 'DASHBOARD', referral_bonus: referral_bonus,  feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: message});
+											}else{
+												//if the user has been in the feeder matrix before
+												//get his last legs
+												var last  = results.slice(-1)[0];
+												var legs = {
+													a: last.a,
+													b: last.b,
+													c: last.c
+												}
+												//check the number of times he has entered the feeder stage
+												db.query( 'SELECT COUNT(user) AS number FROM feeder WHERE user = ?', [username], function ( err, results, fields ){
+													if( err ) throw err;
+													var feedentrance = results[0].number;
+													var totalentrance = 0 + feedentrance;
+													//get his total earnings
+													db.query( 'SELECT SUM(feeder_referral) AS feederbonus, SUM(feederearn) AS feederearn FROM earnings WHERE user = ?', [username], function ( err, results, fields ){
+														if( err ) throw err;
+														var feederearn = results[0].feederearn;
+														var feederbonus = results[0].feederbonus;
+														var referral_bonus = 0 + feederbonus;
+														var total = referral_bonus + feederearn;
+														//check if the last legs are filled or not.
+														if(legs.a !== null && legs.b !== null && legs.c !== null){
+															//give them the opportunity to reenter matrix.
+															var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+															//create 0 variables for the earning section.
+															res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+														}
+														else{
+															//check if the  user has a pending order
+															db.query( 'SELECT receiver FROM orders WHERE receiver = ?', [username], function ( err, results, fields ){
+																if( err ) throw err;
+																if (results.length === 0){
+																	//render the legs
+																	res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}else{
+																	var info = "Someone wants to pay you!"
+																	res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, feederearn: feederearn, total: total, message: info, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}
+															});
+														}
+													});
+												});
 											}
 										});
 									}//end of when user update his profile
@@ -282,6 +946,49 @@ router.get('/dashboard', ensureLoggedIn('/login'), function(req, res, next) {
 												var referral_bonus = 0;
 												var total = 0;
 												res.render('dashboard', {title: 'DASHBOARD', referral_bonus: referral_bonus,  admin: admin, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, feederbonus: feederbonus, message: message});
+											}else{
+												//if the user has been in the feeder matrix before
+												//get his last legs
+												var last  = results.slice(-1)[0];
+												var legs = {
+													a: last.a,
+													b: last.b,
+													c: last.c
+												}
+												//check the number of times he has entered the feeder stage
+												db.query( 'SELECT COUNT(user) AS number FROM feeder WHERE user = ?', [admin], function ( err, results, fields ){
+													if( err ) throw err;
+													var feedentrance = results[0].number;
+													var totalentrance = 0 + feedentrance;
+													//get his total earnings
+													db.query( 'SELECT SUM(feeder_referral) AS feederbonus, SUM(feederearn) AS feederearn FROM earnings WHERE user = ?', [admin], function ( err, results, fields ){
+														if( err ) throw err;
+														var feederearn = results[0].feederearn;
+														var feederbonus = results[0].feederbonus;
+														var referral_bonus = 0 + feederbonus;
+														var total = referral_bonus + feederearn;
+														//check if the last legs are filled or not.
+														if(legs.a !== null && legs.b !== null && legs.c !== null){
+															//give them the opportunity to reenter matrix.
+															var error = 'You have filled this leg. Please Re enter the matrix again to keep earning.';
+															//create 0 variables for the earning section.
+															res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c, admin:admin, feederbonus: feederbonus, referral_bonus: referral_bonus, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus, message: error});
+														}
+														else{
+															//check if the  user has a pending order
+															db.query( 'SELECT receiver FROM orders WHERE receiver = ?', [admin], function ( err, results, fields ){
+																if( err ) throw err;
+																if (results.length === 0){
+																	//render the legs
+																	res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, admin: admin, c: legs.c, feederbonus: feederbonus, referral_bonus: referral_bonus, feederearn: feederearn, total: total, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}else{
+																	var info = "Someone wants to pay you!"
+																	res.render('dashboard', {title: 'DASHBOARD', a: legs.a, b: legs.b, c: legs.c,admin: admin, feederbonus: feederbonus, referral_bonus: referral_bonus, feederearn: feederearn, total: total, message: info, feedentrance: feedentrance, totalentrance: totalentrance, noenter: message, news: news, feederbonus: feederbonus});
+																}
+															});
+														}
+													});
+												});
 											}
 										});
 									}//end of when user update his profile
@@ -415,15 +1122,12 @@ function admini(x){
 		}
 	});
 }
-//var admin = admini( )
-//var vtimer  = timer.timerreset( )
-//setInterval( 10000, vtimer ); 
-// get password verify
 
 // get password reset
 router.get('/passwordreset',  function (req, res, next){
   res.render('passwordreset', {title: "PASSWORD RESET"});
 });
+
 // get verification
 router.get('/manage', ensureLoggedIn('/login'), function (req, res, next){
 	  var currentUser = req.session.passport.user.user_id;
@@ -547,8 +1251,7 @@ router.get('/register/:username', function(req, res, next) {
 });
 
 //register get request
-router.get('/register', function(req, res, next) {
-	
+router.get('/register', function(req, res, next) {	
     res.render('register',  { title: 'REGISTRATION'});
 });
 
@@ -730,6 +1433,7 @@ router.post('/searchorder', function (req, res, next){
 		}
 	});
 });
+
 //delete admin
 router.post('/deladmin', function (req, res, next) {
 	var user = req.body.user;
@@ -943,7 +1647,7 @@ function authentificationMiddleware(){
 }
 var admin = admin(  );*/ 
 //post withdraw
-router.post('/withdraw',  function (req, res, next){
+/*router.post('/withdraw',  function (req, res, next){
 	var currentUser = req.session.passport.user.user_id;
 	//use the user username
 	db.query('SELECT username FROM user WHERE user_id = ?', [currentUser], function(err, results, fields){
@@ -975,7 +1679,8 @@ router.post('/withdraw',  function (req, res, next){
    		   }
   		});
   	});
-});
+});*/
+
 router.post('/pay', function (req, res, next) {
   var user = req.body.user;
   var id = req.body.id;
@@ -993,10 +1698,85 @@ router.post('/pay', function (req, res, next) {
         	  db.query('UPDATE transactions SET debit_receipt = ? WHERE user = ?', [id, user], function(error, results, fields){
         	  if (error) throw error;
         	  var success = 'Payment recorded'
-          res.render( 'status', {success: success});
+			res.render( 'status', {success: success});
           	});
           });
 		}
+	});
+});
+
+router.post('/confirmfeederpayment/:order_id/id/:user', function (req, res, next){
+	var orderId = req.params.order_id;
+	var id = req.params.id;
+	var user = req.params.user;
+	var currentUser = req.session.passport.user.user_id;
+	//update the id to confirmed.
+	db.query('UPDATE orders SET status = ? WHERE id = ?', ['confirmed', id], function(error, results, fields){
+		if (error) throw error;
+		//check if the second one is confirmed or not.
+		db.query('SELECT order_id, purpose, status FROM orders WHERE order_id = ? and not status = ?', [orderId, 'confirmed'], function(error, results, fields){
+			if( err )throw err;
+			if (results.length === 0){
+				res.redirect('/orders');
+			}else{
+				//update the user as confirmed
+				db.query('UPDATE feeder SET status = ? WHERE order_id = ?', ['confirmed', orderId], function(error, results, fields){
+					if (error) throw error;
+					//check where the purpose is.
+					db.query('SELECT purpose FROM orders WHERE order_id = ? and (purpose = ? or purpose = ? or purpose = ?)', [orderId, 'user penalty', 'referral bonus', 'matrix entrance'], function(error, results, fields){
+						if( err )throw err;
+						var purpose = results[0].purpose;
+						if (purpose === 'referral bonus'){
+							//check if the user has earned before
+							db.query('SELECT user FROM earnings WHERE user_id = ?', [currentUser], function(error, results, fields){
+								if( err )throw err;
+								if (results.length === 0){
+									//select the username
+									db.query('SELECT username FROM user WHERE user_id = ?', [currentUser], function(error, results, fields){
+										if( err )throw err;
+										var username = results[0].username;
+										//insert it here.
+										db.query('INSERT INTO earnings (user, user_id, feederbonus) VALUES (?, ?, ?)', [username, currentUser, 4000], function(error, result, fields){
+											if (error) throw error;
+										});
+									});
+								}else{
+									//update the amount with stored procedure.
+									db.query('CALL feederbonus(?)', [currentUser], function(error, results, fields){
+										if (error) throw error;
+										res.redirect('/orders');
+									});
+								}
+							});
+						}if (purpose === 'matrix entrance'){
+							//check if the user has earned before
+							db.query('SELECT user FROM earnings WHERE user_id = ?', [currentUser], function(error, results, fields){
+								if( err )throw err;
+								if (results.length === 0){
+									//select the username
+									db.query('SELECT username FROM user WHERE user_id = ?', [currentUser], function(error, results, fields){
+										if( err )throw err;
+										var username = results[0].username;
+										//insert it here.
+										db.query('INSERT INTO earnings (user, user_id, feederearn) VALUES (?, ?, ?)', [username, currentUser, 4000], function(error, result, fields){
+											if (error) throw error;
+										});
+									});
+								}else{
+									//update the amount with stored procedure.
+									db.query('CALL feederearn(?)', [currentUser], function(error, results, fields){
+										if (error) throw error;
+										res.redirect('/orders');
+									});
+								}
+							});
+						}if (purpose === 'user penalty'){
+							//function to execute.
+						}
+					});
+				});
+			}
+		});
 	});
 });
 
@@ -1158,8 +1938,7 @@ router.post('/profile', function(req, res, next) {
                   if (results.length===0){
                     pool.query('INSERT INTO profile (user, bank, account_name, account_number) VALUES (?, ?, ?, ?)', [username, bank, accountName, accountNumber], function(error, result, fields){
                       if (error) throw error;
-                      console.log(results);
-                      var success = 'Update Successful!'
+					  var success = 'Update Successful!'
                       res.render('profile', {title: "UPDATE SUCCESSFUL", success: success});  
                     });
                   }else{
@@ -1311,7 +2090,7 @@ router.post('/feeder', function (req, res, next) {
 });
 //get error handler for unauthorized
 router.get('/unauthorized', function(req, res){
-	res.status( 401).render('404', {title: 'YOU DO NOT HAVE PERMISSION TO VIEW THIS PAGE. YOU DO NOT HAVE AN ACTIVE MATRIX. PLEASE GO AND PURCHASE A MATRIX TO VIEW THIS PAGE.'});
+	res.status( 401).render('404', {title: 'YOU DO NOT HAVE PERMISSION TO VIEW THIS PAGE.'});
 });
 //get error handler
 router.get('*', function(req, res){
