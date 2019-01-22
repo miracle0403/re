@@ -17,6 +17,7 @@ var expressValidator = require('express-validator');
 var  matrix = require('../functions/normal.js'); 
 var  timer = require('../functions/timer.js'); 
 var bcrypt = require('bcrypt-nodejs');
+var JSAlert = require("js-alert");
 
 function rounds( err, results ){ 
 	if ( err ) throw err;
@@ -35,10 +36,7 @@ var pool  = mysql.createPool({
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  console.log(req.user); 
-  
- 	res.render('index', { title: 'SWIFT REVOLVER' });		
-
+	res.render('index', { title: 'SWIFT REVOLVER'});
 });
 
 // get how it works
@@ -1694,90 +1692,110 @@ router.post('/pay', function (req, res, next) {
 		else{
 			//update to paid
 			db.query('UPDATE withdraw SET status = ? WHERE user = ?', ['paid', user], function(error, results, fields){
-        	  if (error) throw error;
-        	  db.query('UPDATE transactions SET debit_receipt = ? WHERE user = ?', [id, user], function(error, results, fields){
-        	  if (error) throw error;
-        	  var success = 'Payment recorded'
-			res.render( 'status', {success: success});
-          	});
-          });
+				if (error) throw error;
+				db.query('UPDATE transactions SET debit_receipt = ? WHERE user = ?', [id, user], function(error, results, fields){
+					if (error) throw error;
+					var success = 'Payment recorded'
+					res.render( 'status', {success: success});
+				});
+			});
 		}
 	});
 });
+
+router.post('/uploadfeeder/:order_id/id', function (req, res, next) {
+	var orderId = req.params.order_id;
+	var id = req.params.id;
+	var pop = req.body.pop;
+	db.query('UPDATE orders SET pop = ? and status = ? WHERE order_id = ? and id = ?', [pop, 'unconfirmed', orderId, id], function(error, results, fields){
+		if (error) throw error;
+		res.redirect('/orders');
+	});
+});
+
 
 router.post('/confirmfeederpayment/:order_id/id/:user', function (req, res, next){
 	var orderId = req.params.order_id;
 	var id = req.params.id;
 	var user = req.params.user;
 	var currentUser = req.session.passport.user.user_id;
-	//update the id to confirmed.
-	db.query('UPDATE orders SET status = ? WHERE id = ?', ['confirmed', id], function(error, results, fields){
-		if (error) throw error;
-		//check if the second one is confirmed or not.
-		db.query('SELECT order_id, purpose, status FROM orders WHERE order_id = ? and not status = ?', [orderId, 'confirmed'], function(error, results, fields){
-			if( err )throw err;
-			if (results.length === 0){
-				res.redirect('/orders');
-			}else{
-				//update the user as confirmed
-				db.query('UPDATE feeder SET status = ? WHERE order_id = ?', ['confirmed', orderId], function(error, results, fields){
-					if (error) throw error;
-					//check where the purpose is.
-					db.query('SELECT purpose FROM orders WHERE order_id = ? and (purpose = ? or purpose = ? or purpose = ?)', [orderId, 'user penalty', 'referral bonus', 'matrix entrance'], function(error, results, fields){
-						if( err )throw err;
-						var purpose = results[0].purpose;
-						if (purpose === 'referral bonus'){
-							//check if the user has earned before
-							db.query('SELECT user FROM earnings WHERE user_id = ?', [currentUser], function(error, results, fields){
-								if( err )throw err;
-								if (results.length === 0){
-									//select the username
-									db.query('SELECT username FROM user WHERE user_id = ?', [currentUser], function(error, results, fields){
-										if( err )throw err;
-										var username = results[0].username;
-										//insert it here.
-										db.query('INSERT INTO earnings (user, user_id, feederbonus) VALUES (?, ?, ?)', [username, currentUser, 4000], function(error, result, fields){
-											if (error) throw error;
+	// Create an alert with custom buttons
+	var alert = new JSAlert("Are you sure you want to confirm this payment? Remember, this action is irreversible.", "Payment Confirmation");
+	
+	alert.addButton("Yes").then(function() {
+		//update the id to confirmed.
+		db.query('UPDATE orders SET status = ? WHERE id = ?', ['confirmed', id], function(error, results, fields){
+			if (error) throw error;
+			//check if the second one is confirmed or not.
+			db.query('SELECT order_id, purpose, status FROM orders WHERE order_id = ? and not status = ?', [orderId, 'confirmed'], function(error, results, fields){
+				if( err )throw err;
+				if (results.length === 0){
+					res.redirect('/orders');
+				}else{
+					//update the user as confirmed
+					db.query('UPDATE feeder SET status = ? WHERE order_id = ?', ['confirmed', orderId], function(error, results, fields){
+						if (error) throw error;
+						//check where the purpose is.
+						db.query('SELECT purpose FROM orders WHERE order_id = ? and (purpose = ? or purpose = ? or purpose = ?)', [orderId, 'user penalty', 'referral bonus', 'matrix entrance'], function(error, results, fields){
+							if( err )throw err;
+							var purpose = results[0].purpose;
+							if (purpose === 'referral bonus'){
+								//check if the user has earned before
+								db.query('SELECT user FROM earnings WHERE user_id = ?', [currentUser], function(error, results, fields){
+									if( err )throw err;
+									if (results.length === 0){
+										//select the username
+										db.query('SELECT username FROM user WHERE user_id = ?', [currentUser], function(error, results, fields){
+											if( err )throw err;
+											var username = results[0].username;
+											//insert it here.
+											db.query('INSERT INTO earnings (user, user_id, feederbonus) VALUES (?, ?, ?)', [username, currentUser, 4000], function(error, result, fields){
+												if (error) throw error;
+											});
 										});
-									});
-								}else{
-									//update the amount with stored procedure.
-									db.query('CALL feederbonus(?)', [currentUser], function(error, results, fields){
-										if (error) throw error;
-										res.redirect('/orders');
-									});
-								}
-							});
-						}if (purpose === 'matrix entrance'){
-							//check if the user has earned before
-							db.query('SELECT user FROM earnings WHERE user_id = ?', [currentUser], function(error, results, fields){
-								if( err )throw err;
-								if (results.length === 0){
-									//select the username
-									db.query('SELECT username FROM user WHERE user_id = ?', [currentUser], function(error, results, fields){
-										if( err )throw err;
-										var username = results[0].username;
-										//insert it here.
-										db.query('INSERT INTO earnings (user, user_id, feederearn) VALUES (?, ?, ?)', [username, currentUser, 4000], function(error, result, fields){
+									}else{
+										//update the amount with stored procedure.
+										db.query('CALL feederbonus(?)', [currentUser], function(error, results, fields){
 											if (error) throw error;
+											res.redirect('/orders');
 										});
-									});
-								}else{
-									//update the amount with stored procedure.
-									db.query('CALL feederearn(?)', [currentUser], function(error, results, fields){
-										if (error) throw error;
-										res.redirect('/orders');
-									});
-								}
-							});
-						}if (purpose === 'user penalty'){
-							//function to execute.
-						}
+									}
+								});
+							}if (purpose === 'matrix entrance'){
+								//check if the user has earned before
+								db.query('SELECT user FROM earnings WHERE user_id = ?', [currentUser], function(error, results, fields){
+									if( err )throw err;
+									if (results.length === 0){
+										//select the username
+										db.query('SELECT username FROM user WHERE user_id = ?', [currentUser], function(error, results, fields){
+											if( err )throw err;
+											var username = results[0].username;
+											//insert it here.
+											db.query('INSERT INTO earnings (user, user_id, feederearn) VALUES (?, ?, ?)', [username, currentUser, 4000], function(error, result, fields){
+												if (error) throw error;
+											});
+										});
+									}else{
+										//update the amount with stored procedure.
+										db.query('CALL feederearn(?)', [currentUser], function(error, results, fields){
+											if (error) throw error;
+											res.redirect('/orders');
+										});
+									}
+								});
+							}if (purpose === 'user penalty'){
+								//function to execute.
+							}
+						});
 					});
-				});
-			}
+				}
+			});
 		});
 	});
+	alert.addButton("No").then(function() {
+		JSAlert.alert("You did not consent to have received this payment.", "Confirmation Cancelled", "Got it");
+	});
+	alert.show();
 });
 
 router.post('/reset', function(req, res, next) {
@@ -1956,6 +1974,8 @@ router.post('/profile', function(req, res, next) {
     });
   }
 });
+
+
 
 //post the register
 //var normal = require( '../functions/normal.js' );

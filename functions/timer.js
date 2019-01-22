@@ -1,3 +1,4 @@
+var db = require('../db.js'); 
 /*exports.count = function count( ){
 	var countDown= new Date("Nov  14,  2018 10:00:00").getTime(  );
 	var now = new Date().getTime(  );
@@ -16,7 +17,7 @@
 //code the first 45 minutes timer.
 exports.firstcount = function firstcount( ){
 	//get the time they were entered from the database
-	db.query('SELECT date_entered FROM orders', function(err, results, fields){
+	db.query('SELECT date_entered FROM orders WHERE status = ?',['pending'], function(err, results, fields){
 		if ( err ) throw err;
 		if (results.length > 0){
 			//loop with while loop.
@@ -36,3 +37,28 @@ exports.firstcount = function firstcount( ){
 		}
 	});
 }
+
+//code the last 72 hours timer.
+function secondcount(){
+	//get the time they were entered from the database
+	db.query('SELECT date_entered FROM orders WHERE status = ?', ['unconfirmed'], function(err, results, fields){
+		if ( err ) throw err;
+		if (results.length > 0){
+			//loop with while loop.
+			var i = 0;
+			var now = new Date().getTime();
+			while ( i < results.length  ){
+				var dates = results[i].date_entered;
+				var date = dates.getTime();
+				var distance = now - date;
+				var datehours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+				if (datehours >= 72){
+					//make the order inactive incase the user forgot to upload the proof of payment before the time expired.
+					//put db procedure here to remove the user from the feeder table.
+				}
+				i++;
+			}
+		}
+	});
+}
+//setInterval(secondcount, 5000);
