@@ -12,7 +12,7 @@ var countDown= new Date("Feb 18,  2019 10:00:00").getTime(  );
 	//	var status = 'ACTIVE'
 		
 		//show them in the demo
-						document.getElementById("count").innerHTML = days + "d " + hours + "h "
+					/*	document.getElementById("count").innerHTML = days + "d " + hours + "h "
   + minutes + "m " + seconds + "s ";
 		//document.getElementById("registerbutton").style.display= "none";
 		
@@ -22,7 +22,8 @@ var countDown= new Date("Feb 18,  2019 10:00:00").getTime(  );
 			//document.getElementById("registerbutton").style.display= "block";
     		
   		}
- 	
+ 	*/
+ 	document.getElementById("count").innerHTML = "COMING SOON";
 		
  	}, 1000);
  	
