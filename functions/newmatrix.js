@@ -1,6 +1,7 @@
 var db = require( '../db.js' );
 var securePin = require('secure-pin');
 var newfeeder = require( './newfeederspill.js' );
+var othermatrix = require( './rotate.js' );
 exports.matrix = function(username, sponsor, res){
 	//get the person he or she should be under.
 	db.query('SELECT parent.sponsor, parent.user FROM user_tree AS node, user_tree AS parent WHERE node.lft BETWEEN parent.lft AND parent.rgt AND node.user = ? AND parent.feeder is not null ORDER BY parent.lft', [username], function(err, results, fields){
@@ -42,11 +43,11 @@ exports.matrix = function(username, sponsor, res){
 										code: results[0].code
 									}
 									//enter it into the order table  make it a called procedure.
-									db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', user, username, 'Admin', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
+									db.query('CALL adminfee VALUES( ?,?,?,?,?,?,?,?,?,?,? )', [pin1, 'ADMINISTRATOR', user, username, 'SWIFT REVOLVER', 'SWIFT REVOLVER', 'ACCESS', '1234567890', 'pending', 'admin fee', 234, 8061179366], function( err, results, fields ){
 										if( err ) throw err;
-										db.query('INSERT INTO orders (order_id, receiver_fullname, user, payer, receiver, accountName, bank, accountNumber, status, purpose,code, phone) VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, user, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
+										db.query('CALL matrixorder VALUES( ?,?,?,?,?,?,?,?,?,?,? ) ', [pin1, contact.full_name, user, username, user, bank.account_name, bank.bank, bank.account_number, 'pending', 'matrix', contact.code, contact.phone], function( err, results, fields ){
 											if( err ) throw err;
-											res.redirect('dashboard');
+											res.redirect('/orders');
 										});
 									});
 								});
